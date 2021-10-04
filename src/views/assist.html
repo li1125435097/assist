@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>ssp服务辅助</title>
+		<script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.js" type="text/javascript" charset="utf-8"></script>
+		<style type="text/css">
+			.banner{padding: 10px 2px;}		
+			.textarea,textarea{width: 48.8%;height: 50vh;resize: none;padding: 5px;}
+			textarea:last-child{width: 100%;}
+			.table{display: none;width: max-content;}
+			.textarea{display: inline-block;padding: 0;}
+		</style>
+	</head>
+	<body>
+		
+		<div class="banner"><button type="button">解析</button></div>
+		<textarea class="text" placeholder="数据填入窗口"></textarea>
+		<span class="textarea">
+			<table border="" cellspacing="0" cellpadding="0" class="table"></table>
+			<textarea class="fill" placeholder="数据展示窗口" readonly></textarea>
+		</span>		
+		<button type="button" onclick="parse()">解析数据</button>
+		<button type="button" onclick="parseTab()">解析表格</button>
+		<button type="button" onclick="save()">保存数据</button>
+		<button type="button" onclick="print()">展示数据输出到控制台</button>
+		
+		<script type="text/javascript">
+		
+			// 全局变量
+			const toStr = JSON.stringify
+			const l = console.log
+			const banner = $('.banner')
+			const fill = $('.fill')
+			const text = $('.text')
+			const table = $('.table')
+			
+			$(async function(){
+				
+				// 获取数据赋值给全局变量datas
+				window.datas = await $.get('/db/getdata')
+				
+				// 筛选带有channelid到数据
+				datas = datas.filter(v=>{return v.channelid})
+				
+				// 渲染banner按钮
+				renderBtn(datas)								
+			})
+						
+			
+			// 解析按钮方法
+			function parse(){
+				let txt = text.val()		//获取填入窗口数据
+				if(!txt) return alert('请填充数据！！！')
+				fill.text("")				// 显示窗口质空
+				try{
+					txt = objFormatByStr(txt)
+					return fill.text(toStr(txt))
+				}catch(e){}				
+				try{
+					txt = arrFormatByTableStr(txt)
+					return fill.text(toStr(txt))
+				}catch(e){}
+								
+				
+				return alert('解析失败，请检查你的数据格式！！！')
+			}
+			
+			// 解析表格按钮方法
+			function parseTab(){
+				let txt = text.val()		//获取填入窗口数据
+				if(!txt) return alert('请填充数据！！！')
+				fill.text("")				// 显示窗口质空
+				txt = txt.replaceAll("\n", " ")
+				txt = txt.split(' ')
+				let result = []
+				let middleData = []
+				txt.forEach((v,i)=>{
+					middleData.push(v)
+					if((i+1)%4==0){
+						result.push(middleData)
+						middleData = []
+					}
+				})
+				return fill.text(toStr(result))
+			}
+			
+			// 双击按钮删除按钮方法
+			async function del(id,name){
+				const is = confirm(`你确定要删除${name}按钮吗？`)
+				if(is){
+					let result = await $.get('/db/deldata',{id:+id})
+					if(result == 'success'){
+						 alert('删除成功')
+						 location.reload()
+					}else{
+						alert('删除失败！！！')
+					}
+				}
+				
+			}
+			
+			// 点击按钮显示数据方法
+			function show(index){
+				window.indexNow = index
+				let data = datas[index].data
+				let isTab = $(event.target).text().trim().slice(-2) == '表格'
+				if(isTab){
+					table.show()
+					fill.hide()
+					text.hide()
+					renderTab(data)
+				}else{
+					table.hide()
+					fill.show()
+					text.show()
+					fill.text(data)
+				}
+			}
+			
+			// 保存按钮方法
+			async function save(){
+				let text = fill.val()
+				if(!text) return alert('数据展示窗口无数据，请解析数据到展示窗口！！！')
+				let person=prompt("请输入你的频道id和数据的名称，两个数据用’，‘分割","30,请求参数"); 
+				if (person!=null && person!=""){ 
+					let data = person.split(',')
+					if(data.length<2) return alert('数据格式错误，请输入你的频道id和数据的名称，两个数据用”，“分割')
+					let result = await $.post('/db/adddata',{channelid:data[0],name:data[1],data:text})
+					if(result == 'success'){alert('保存成功');location.reload()}
+				} 
+			}
+			
+			// 展示数据输出到控制台按钮方法
+			function print(){
+				let data = datas[indexNow]
+				if(!data) return alert('展示窗口无数据！！！')
+				l(JSON.parse(data.data))
+			}
+			
+			// 渲染banner按钮
+			function renderBtn(datas){
+				let html = []
+				datas.map((v,i)=>{
+					html.push(`<button type="button" onclick="show(${i})"  ondblclick="del(${v.id},'${v.name}')" title="${v.channelid}">${v.name}</button>`)
+				})
+				html = html.join("")
+				banner.html(html)
+			}
+			
+			// 渲染展示窗口表格
+			function renderTab(data){
+				data = JSON.parse(data)
+				let html = []
+				data.forEach((v,i)=>{
+					if(i=0){
+						html.push(`<tr><th>${v.join('</th><th>')}</th></tr>`)
+					}else{
+						html.push(`<tr><td>${v.join('</td><td>')}</td></tr>`)
+					}
+				})
+				table.html(html.join(""))
+			}
+			
+			// json字符串格式化并转换成对象
+			function objFormatByStr(str){				
+				str = str.replaceAll("\n"," ")
+				return JSON.parse(str)
+			}
+		
+			function arrFormatByTableStr(txt){
+				txt = txt.replaceAll('\n'," ")
+				let arr = txt.split(" ")
+				let result = []
+				let obj = []
+				arr.map(v=>{
+					if(v.match(/\d{4}/)){
+						result.push(obj)
+						obj = []						
+					}
+					obj.push(v)
+				})
+				return result
+			}
+		</script>
+	</body>
+</html>

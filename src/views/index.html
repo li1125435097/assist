@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title></title>
+		<script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.js" type="text/javascript" charset="utf-8"></script>
+	</head>
+	<body>
+		
+		<span>hellow world</span><br>
+		<span>hellow world</span><br>
+		<script type="text/javascript">
+			$(async function(){
+				
+				`数据库是存了一个数组，数组的每一项是一个对象，每个对象有唯一id，增加修改需要传入一个对象`
+				
+				
+				// 查询接口
+				// let data = await $.get('/db/getdata')
+				
+				// 增加接口  增加的数据为{a:2,name:'jk'}
+				// let data = await $.post('/db/adddata',{a:2,name:'jk'})
+				
+				// 修改接口 每次只能修改一条数据
+				// let data = await $.get('/db/update',{id:1,a:2,name:'jk'})
+				
+				// 删除接口 只需要传数据的id
+				// let data = await $.get('/db/deldata',{id:4})
+				// console.log(data)
+			})
+		</script>
+	</body>
+</html>
