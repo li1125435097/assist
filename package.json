@@ -5,8 +5,8 @@
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "s": "nodemon app.js",
-    "start": "nodemon app.js"
+    "start": "nodemon app.js",
+	"deploy": "node deploy.js"
   },
   "keywords": [],
   "author": "",
@@ -15,6 +15,10 @@
     "body-parser": "^1.19.0",
     "ejs": "^3.1.6",
     "express": "^4.17.1",
-	"nodemon": "^2.0.12"
+    "nodemon": "^2.0.12"
+  },
+  "devDependencies": {
+    "archiver": "^5.3.0",
+    "node-ssh": "^12.0.0"
   }
 }
